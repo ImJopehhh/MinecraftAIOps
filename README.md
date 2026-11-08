@@ -27,7 +27,7 @@ All CLI commands can be executed in a terminal by human operators or invoked by 
 | `backup` | `<remotePath> [serverId]` | Duplicates remote file to `<remotePath>.bak` as a safety snapshot. | `node scripts/ptero.js backup server.properties` |
 | `rollback` | `<remotePath> [serverId]` | Restores remote file from its backup copy `<remotePath>.bak`. | `node scripts/ptero.js rollback server.properties` |
 | `patch-prop`| `<filePath> <key> <val> [serverId]` | In-place patches key in Java properties file with auto-backup and diff output. | `node scripts/ptero.js patch-prop server.properties server-port 25577` |
-| `patch-yaml`| `<filePath> <dotPath> <val> [serverId]` | In-place patches nested key in YAML file with auto-backup and diff output. | `node scripts/ptero.js patch-yaml plugins/Geyser-Spigot/config.yml bedrock.transport raknet` |
+| `patch-yaml`| `<filePath> <dotPath> <val> [serverId]` | In-place patches nested key in YAML file with auto-backup and diff output. | `node scripts/ptero.js patch-yaml plugins/Geyser-Spigot/config.yml bedrock.clone-remote-port false` |
 | `upload` | `<localFile> [remoteDir] [serverId]` | Uploads a local file (e.g., plugin `.jar`) to remote server using signed upload URL. | `node scripts/ptero.js upload ./Spark.jar plugins/` |
 
 ---

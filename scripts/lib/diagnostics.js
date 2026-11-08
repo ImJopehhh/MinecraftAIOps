@@ -81,8 +81,8 @@ export const ISSUE_SIGNATURES = [
     severity: 'CRITICAL',
     name: 'Geyser NetherNet / Terracotta Error',
     pattern: /(?:Failed to bind NetherNet|InitialConnection-149|NetherNet transport error|Cannot assign requested address.*19132)/i,
-    description: 'Bedrock client disconnects with Terracotta error due to NetherNet WebRTC/TCP protocol mismatch or missing port allocations.',
-    remediation: 'Open plugins/Geyser-Spigot/config.yml, change transport: nethernet to transport: raknet, or ensure both TCP and UDP ports are allocated in Pterodactyl.'
+    description: 'Bedrock client fails to connect with Terracotta error due to NetherNet port collision with Java, unallocated secondary port, or missing public advertise-addresses behind Docker container.',
+    remediation: 'In plugins/Geyser-Spigot/config.yml: 1) Set bedrock.clone-remote-port: false (NetherNet requires separate port from Java). 2) Assign a dedicated secondary port allocated in Pterodactyl. 3) Configure advertise-addresses with public IP:Port so containerized Docker IP is not sent to clients. 4) Ensure hosting provider allows both TCP (signaling) and UDP (WebRTC) on that port.'
   },
   {
     type: 'CONFIG_SYNTAX_ERROR',

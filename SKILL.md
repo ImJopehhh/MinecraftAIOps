@@ -100,7 +100,7 @@ flowchart TD
     C -->|JAVA_VERSION_MISMATCH| E[Identify required Java version in startup image]
     C -->|MISSING_DEPENDENCY| F[Identify missing plugin JAR and alert user]
     C -->|CONFIG_SYNTAX_ERROR| G[Check YAML indentation or restore from .bak]
-    C -->|GEYSER_NETHERNET| H[Patch transport to raknet in Geyser config.yml]
+    C -->|GEYSER_NETHERNET| H[Set clone-remote-port: false & dedicated port in Geyser config.yml]
     D --> I[Present Diff & Warning -> Ask Approval -> Patch]
     E --> I
     F --> I

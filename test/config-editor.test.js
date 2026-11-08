@@ -33,13 +33,13 @@ test('config-editor: patchYamlKey updates nested keys while preserving comments'
 bedrock:
   address: 0.0.0.0
   port: 19132
-  transport: nethernet # default transport
+  clone-remote-port: true # default clone
 remote:
   address: auto
 `;
 
-  const updatedYaml = patchYamlKey(originalYaml, 'bedrock.transport', 'raknet');
-  assert.match(updatedYaml, /transport:\s*raknet\s*# default transport/);
+  const updatedYaml = patchYamlKey(originalYaml, 'bedrock.clone-remote-port', 'false');
+  assert.match(updatedYaml, /clone-remote-port:\s*false\s*# default clone/);
   assert.match(updatedYaml, /port:\s*19132/);
 });
 
