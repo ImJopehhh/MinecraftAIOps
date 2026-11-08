@@ -5,10 +5,16 @@
  * Executable by any AI Agent or human developer via terminal.
  */
 
+import { writeFileSync, existsSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { PteroClient } from './lib/ptero-client.js';
 import { detectIssues, formatDiagnosticReport, parseLogLines } from './lib/diagnostics.js';
 import { patchProperties, patchYamlKey, createDiff } from './lib/config-editor.js';
 import { gracefulRestart } from './lib/lifecycle.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const envFilePath = resolve(__dirname, '../.env');
 
 const client = new PteroClient();
 
@@ -20,6 +26,8 @@ USAGE:
   node scripts/ptero.js <subcommand> [arguments...]
 
 SUBCOMMANDS:
+  verify-config                             Check if .env exists and verify API credentials with panel.
+  setup --url=<url> --key=<key> [--server]  Create or update .env configuration file safely.
   usage [serverId]                          Display real-time CPU, RAM, Disk, and Uptime metrics.
   info [serverId]                           Display server specifications, limits, and port allocations.
   logs [serverId] [--filter=error|warn|all] Read remote logs/latest.log with optional filtering.
@@ -78,16 +86,75 @@ async function main() {
   const { flags, cleanArgs } = parseFlags(rawArgs);
   const command = cleanArgs[0];
 
+  // Handle configuration setup and verification commands before enforcing .env
+  if (command === 'setup') {
+    const url = flags.url || cleanArgs[1];
+    const key = flags.key || cleanArgs[2];
+    const serverId = flags.server || flags.serverId || cleanArgs[3] || '';
+
+    if (!url || !key) {
+      console.error(`
+Usage:
+  node scripts/ptero.js setup --url=https://panel.example.com --key=ptlc_xxxx [--server=xxxx]
+`);
+      process.exit(1);
+    }
+
+    const cleanUrl = url.replace(/\/+$/, '');
+    const envContent = `# Pterodactyl Panel Configuration\nPTERO_URL=${cleanUrl}\nPTERO_CLIENT_KEY=${key}\nPTERO_SERVER_ID=${serverId}\n`;
+    writeFileSync(envFilePath, envContent, 'utf-8');
+    console.log(`✅ Configuration saved to .env successfully!`);
+
+    // Verify immediately
+    const verifyClient = new PteroClient({ url: cleanUrl, apiKey: key, serverId });
+    const check = await verifyClient.testConnection();
+    if (check.success) {
+      console.log(`✅ API connection verified! Authenticated as: ${check.username} (${check.email})`);
+    } else {
+      console.warn(`⚠️ Warning: Saved to .env, but API verification returned: ${check.error}`);
+    }
+    return;
+  }
+
+  if (command === 'verify-config') {
+    if (!client.isConfigured()) {
+      console.log(`
+[CONFIG STATUS: UNCONFIGURED]
+The .env file is missing or required credentials (PTERO_URL, PTERO_CLIENT_KEY) are empty.
+
+ONBOARDING CHOICES FOR USER:
+1️⃣ Assisted Setup: Provide your Panel URL and Client API Key in chat, and your AI Agent will write .env.
+2️⃣ Manual Setup: Create .env privately using the steps in README: https://github.com/ImJopehhh/MinecraftAIOps#manual-private-setup
+`);
+      process.exit(1);
+    }
+
+    const check = await client.testConnection();
+    if (check.success) {
+      console.log(`
+✅ [CONFIG STATUS: VALID]
+Pterodactyl API connection verified!
+Authenticated as : ${check.username} (${check.email})
+Panel URL        : ${client.baseUrl}
+Default Server ID: ${client.defaultServerId || 'Not set (must pass per command)'}
+`);
+    } else {
+      console.error(`
+❌ [CONFIG STATUS: INVALID CREDENTIALS OR UNREACHABLE]
+Failed to connect to Pterodactyl panel: ${check.error}
+Check your PTERO_URL and PTERO_CLIENT_KEY in .env.
+`);
+      process.exit(1);
+    }
+    return;
+  }
+
   if (!client.isConfigured()) {
     console.error(`
 [CONFIG ERROR] Pterodactyl URL or API Key is not configured!
-Ensure .env file exists with the following configuration:
-  PTERO_URL=https://panel.example.com
-  PTERO_CLIENT_KEY=ptlc_xxxxxxxxxxxxxxxxxxxxxxxx
-  PTERO_SERVER_ID=xxxxxxxx
-
-AI AGENT ACTION:
-Prompt the user for their Pterodactyl Panel URL and Client API Key, then save them into the .env file.
+Run:
+  node scripts/ptero.js verify-config
+to see onboarding choices and setup instructions.
 `);
     process.exit(1);
   }

@@ -52,3 +52,14 @@ test('ptero-client: throws on invalid power signal', async () => {
   );
 });
 
+test('ptero-client: testConnection returns failure when unconfigured', async () => {
+  const client = new PteroClient({
+    url: '',
+    apiKey: '',
+  });
+
+  const res = await client.testConnection();
+  assert.equal(res.success, false);
+  assert.match(res.error, /missing/i);
+});
+

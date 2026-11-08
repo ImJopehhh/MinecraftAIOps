@@ -15,6 +15,8 @@ All CLI commands can be executed in a terminal by human operators or invoked by 
 
 | Command | Arguments / Flags | Description | Example Usage |
 | :--- | :--- | :--- | :--- |
+| `verify-config` | - | Tests `.env` presence and validates API credentials against Pterodactyl. | `node scripts/ptero.js verify-config` |
+| `setup` | `--url=<url> --key=<key> [--server=<id>]` | Creates or updates `.env` file safely with proper formatting. | `node scripts/ptero.js setup --url=https://panel.example.com --key=ptlc_xxx` |
 | `usage` | `[serverId]` | Displays real-time CPU (%), RAM, Disk, Uptime, and server state. | `node scripts/ptero.js usage` |
 | `info` | `[serverId]` | Displays server details, limits (CPU, RAM, Disk), and allocated network ports. | `node scripts/ptero.js info` |
 | `logs` | `[serverId] [--filter=all\|error\|warn] [--lines=N]` | Reads remote `logs/latest.log` with optional error or warning filtering. | `node scripts/ptero.js logs --filter=error --lines=50` |
@@ -40,6 +42,7 @@ Standalone HTTP client module built on native Node.js ESM `fetch` for interactin
 | :--- | :--- | :--- | :--- |
 | `constructor(options)` | `{ url, apiKey, serverId }` | `PteroClient` | Initializes client (auto-loads `.env` if options omitted). |
 | `isConfigured()` | - | `boolean` | Verifies whether `baseUrl` and `apiKey` are present. |
+| `testConnection()` | - | `Promise<{ success: boolean, username?: string, error?: string }>` | Tests API key validity against Pterodactyl account endpoint. |
 | `getServerDetails(serverId)` | `serverId?: string` | `Promise<Object>` | Fetches server metadata, node name, feature limits, and allocated IP/port list. |
 | `getServerUsage(serverId)` | `serverId?: string` | `Promise<Object>` | Fetches real-time metrics (CPU %, memory bytes, disk bytes, uptime, state). |
 | `sendCommand(command, serverId)`| `command: string, serverId?: string` | `Promise<Object>` | Dispatches console command string to server. |
@@ -110,19 +113,46 @@ Safe configuration modifier preserving indentation, comments, and structure:
 - **Node.js** v18.0.0 or higher (v20+ / v25+ recommended).
 - **Pterodactyl Client API Key (`ptlc_...`)**: Generate from your Pterodactyl Panel under *Account Settings* -> *API Credentials*.
 
-### 2. Configuration
-Copy `.env.example` to `.env`:
+### 2. Quick Install for AI Agents
+Any AI Agent (or user) can clone this repository with a single terminal command:
 ```bash
-cp .env.example .env
-```
-Populate your credentials in `.env`:
-```env
-PTERO_URL=https://panel.example.com
-PTERO_CLIENT_KEY=ptlc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-PTERO_SERVER_ID=xxxxxxxx
+# Option A: Install globally as an Antigravity / Gemini skill
+git clone https://github.com/ImJopehhh/MinecraftAIOps.git ~/.gemini/skills/minecraft-aiops
+
+# Option B: Install directly inside your project repository
+git clone https://github.com/ImJopehhh/MinecraftAIOps.git ./tools/minecraft-aiops
 ```
 
-### 3. Running Unit Tests (TDD)
+---
+
+<a id="manual-private-setup"></a>
+### 3. Manual Private Setup (Privacy First)
+
+If you prefer **not** to share your API key in chat history with AI models, configure `.env` manually in your private editor:
+
+1. Copy the example configuration template:
+   ```bash
+   cp .env.example .env
+   ```
+2. Open `.env` in your editor and fill in your details:
+   ```env
+   # Your Pterodactyl Panel URL (no trailing slash)
+   PTERO_URL=https://panel.example.com
+
+   # Client API Key (starts with ptlc_)
+   PTERO_CLIENT_KEY=ptlc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+   # Default server identifier or UUID (found in URL: /server/xxxxxxxx)
+   PTERO_SERVER_ID=xxxxxxxx
+   ```
+3. Test your connection privately:
+   ```bash
+   node scripts/ptero.js verify-config
+   ```
+
+---
+
+### 4. Running Unit Tests (TDD)
 The project comes with a zero-dependency test suite utilizing Node.js native test runner:
 ```bash
 npm test

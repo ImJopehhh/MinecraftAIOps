@@ -9,19 +9,28 @@ This skill equips any AI Agent with the procedures, guardrails, and diagnostics 
 
 ---
 
-## 1. Onboarding & Environment Setup
+## 1. Onboarding & Privacy-First Credential Setup
 
-Before executing operational tasks, check if `.env` exists in the workspace root with valid values:
-- `PTERO_URL`: Pterodactyl panel URL (e.g., `https://panel.example.com`).
-- `PTERO_CLIENT_KEY`: Client API key starting with `ptlc_`.
-- `PTERO_SERVER_ID`: Default server identifier or UUID.
+Before executing operational tasks, test if credentials are valid by running:
+```bash
+node scripts/ptero.js verify-config
+```
 
 > [!IMPORTANT]
-> If `.env` is absent or unconfigured:
-> 1. Stop and politely request credentials from the user:
->    *"Please generate an API Key in your Pterodactyl Panel (Click Account Avatar -> Account Settings -> API Credentials -> Create New). Provide your Panel URL and Client API Key (`ptlc_...`)."*
-> 2. Save credentials to local `.env`.
-> 3. **Secret Protection:** Never echo, log, or leak `.env` keys, database passwords, or proxy forwarding secrets in chat or logs.
+> If configuration is missing or invalid:
+> 1. **DO NOT FORCE** the user to paste credentials into chat.
+> 2. Present the user with two transparent onboarding choices:
+>    - **Option 1 (Assisted Setup):** The user provides Panel URL, Client API Key (`ptlc_...`), and optional Server ID in chat, and the AI runs `node scripts/ptero.js setup --url=<url> --key=<key> [--server=<id>]` to generate `.env` locally.
+>    - **Option 2 (Manual Private Setup):** Direct the user to the GitHub README guide:
+>      *"You can configure `.env` privately in your editor without sharing credentials in chat. Follow the steps in the [GitHub README](https://github.com/ImJopehhh/MinecraftAIOps#manual-private-setup). Once created, tell me and I will verify the connection."*
+> 3. Once `.env` is created, verify connectivity using:
+>    ```bash
+>    node scripts/ptero.js verify-config
+>    ```
+
+### Strict `.env` Privacy Rule
+- The AI Agent **MUST NEVER** open, read (`read_file`), inspect, or print the contents of `.env` into chat, unless the user **EXPLICITLY** requests to see their `.env` file.
+- All credential validation must be performed via `node scripts/ptero.js verify-config`, which tests connection to the Pterodactyl API behind the scenes without leaking tokens into the LLM context window.
 
 ---
 

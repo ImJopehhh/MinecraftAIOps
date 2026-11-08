@@ -112,6 +112,30 @@ export class PteroClient {
   }
 
   /**
+   * Test API connectivity and validate client key credentials.
+   * Returns user account metadata without exposing the API key.
+   */
+  async testConnection() {
+    if (!this.baseUrl || !this.apiKey) {
+      return { success: false, error: 'PTERO_URL or PTERO_CLIENT_KEY is missing.' };
+    }
+    try {
+      const data = await this.request('/api/client/account');
+      const attr = data.attributes || {};
+      return {
+        success: true,
+        username: attr.username || 'unknown',
+        email: attr.email || 'unknown',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err.message,
+      };
+    }
+  }
+
+  /**
    * Get server details, allocations, limits, and feature flags.
    */
   async getServerDetails(serverId) {
