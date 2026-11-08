@@ -1,0 +1,20 @@
+# Environment variables & secrets (CRITICAL: NEVER COMMIT)
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Logs & temp files
+*.log
+logs/
+*.bak
+*.tmp
+.cache/
+
+# OS specific
+.DS_Store
+Thumbs.db
+

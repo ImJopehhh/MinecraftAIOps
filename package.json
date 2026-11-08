@@ -1,0 +1,27 @@
+{
+  "name": "minecraft-aiops",
+  "version": "1.0.0",
+  "description": "Autonomous AI SRE assistant for Minecraft server management, diagnostics, and optimization via Pterodactyl Client API.",
+  "type": "module",
+  "main": "scripts/ptero.js",
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "ptero": "node scripts/ptero.js"
+  },
+  "keywords": [
+    "minecraft",
+    "aiops",
+    "pterodactyl",
+    "papermc",
+    "purpur",
+    "velocity",
+    "diagnostics",
+    "sre"
+  ],
+  "author": "ImJopeh",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
