@@ -8,6 +8,7 @@
 import { PteroClient } from './lib/ptero-client.js';
 import { detectIssues, formatDiagnosticReport, parseLogLines } from './lib/diagnostics.js';
 import { patchProperties, patchYamlKey, createDiff } from './lib/config-editor.js';
+import { gracefulRestart } from './lib/lifecycle.js';
 
 const client = new PteroClient();
 
@@ -25,6 +26,7 @@ SUBCOMMANDS:
   diagnose [serverId]                       Analyze server logs and automatically identify root causes.
   cmd <command...> [serverId]               Send console command to server (e.g., 'plugins', 'spark health').
   power <start|stop|restart|kill> [srvId]   Send power action signal to server.
+  graceful-restart [serverId]               Safely stop via console 'stop', flush DB & chunks, then reboot.
   files [directory] [serverId]              List files and directories on remote server.
   read-file <remotePath> [serverId]         Display contents of a remote file.
   backup <remotePath> [serverId]            Create backup copy (<path>.bak) on remote server.
@@ -164,6 +166,16 @@ Prompt the user for their Pterodactyl Panel URL and Client API Key, then save th
         const serverId = cleanArgs[2];
         await client.setPowerState(signal, serverId);
         console.log(`✅ Power action '${signal}' successfully delivered to server.`);
+        break;
+      }
+
+      case 'graceful-restart': {
+        const serverId = cleanArgs[1];
+        console.log('=== STARTING GRACEFUL RESTART LIFECYCLE ===');
+        const result = await gracefulRestart(client, serverId, {
+          onProgress: (msg) => console.log(`[Lifecycle] ${msg}`)
+        });
+        console.log(`✅ Graceful restart completed successfully in ${(result.totalDurationMs / 1000).toFixed(1)}s (Shutdown: ${(result.shutdownDurationMs / 1000).toFixed(1)}s, Boot: ${(result.bootDurationMs / 1000).toFixed(1)}s).`);
         break;
       }
 

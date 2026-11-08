@@ -21,6 +21,7 @@ All CLI commands can be executed in a terminal by human operators or invoked by 
 | `diagnose` | `[serverId]` | Automatically analyzes server logs and matches against known Minecraft issue signatures. | `node scripts/ptero.js diagnose` |
 | `cmd` | `<command...> [serverId]` | Sends console command to server (e.g., status, reload, or diagnostic commands). | `node scripts/ptero.js cmd "plugins"` |
 | `power` | `<start\|stop\|restart\|kill> [serverId]` | Sends power control action signal to Pterodactyl container. | `node scripts/ptero.js power restart` |
+| `graceful-restart` | `[serverId]` | Safely stops server via console 'stop', flushes DB pools and world chunks, then restarts. | `node scripts/ptero.js graceful-restart` |
 | `files` | `[directory] [serverId]` | Lists files and directories in remote server path. | `node scripts/ptero.js files plugins/` |
 | `read-file` | `<remotePath> [serverId]` | Reads raw text contents of a remote server file. | `node scripts/ptero.js read-file server.properties` |
 | `backup` | `<remotePath> [serverId]` | Duplicates remote file to `<remotePath>.bak` as a safety snapshot. | `node scripts/ptero.js backup server.properties` |
@@ -68,6 +69,10 @@ Log analysis and pattern matching module for Minecraft server failures:
 - **`JAVA_VERSION_MISMATCH` (FATAL):** `UnsupportedClassVersionError` (plugin compiled with newer Java version than server runtime).
 - **`MISSING_DEPENDENCY` (CRITICAL):** `UnknownDependencyException` / `CannotLoadException` (required plugin missing).
 - **`OUT_OF_MEMORY` (FATAL):** `OutOfMemoryError: Java heap space` or `GC overhead limit exceeded`.
+- **`HIKARICP_STARVATION` (CRITICAL):** HikariCP database pool exhausted / query timeout (`Connection is not available`).
+- **`SQLITE_LOCK` (CRITICAL):** SQLite database busy or locked (`[SQLITE_BUSY]` concurrent write race condition).
+- **`NETTY_BUFFER_LEAK` (FATAL):** Netty direct memory leak (`OutOfDirectMemoryError`).
+- **`CORRUPTED_CHUNK` (CRITICAL):** Damaged chunk or region file headers (`RegionFile corrupted`).
 - **`WATCHDOG_FREEZE` (CRITICAL):** `Server hang watch dog` / thread dump server freeze.
 - **`GEYSER_NETHERNET_MISMATCH` (CRITICAL):** Bedrock Terracotta error / NetherNet transport failure.
 - **`CONFIG_SYNTAX_ERROR` (CRITICAL):** YAML `ScannerException` / `YAMLException` indentation error.
@@ -75,7 +80,17 @@ Log analysis and pattern matching module for Minecraft server failures:
 
 ---
 
-### 4. Library Reference: `ConfigEditor` (`scripts/lib/config-editor.js`)
+### 4. Library Reference: `Lifecycle` (`scripts/lib/lifecycle.js`)
+
+Lifecycle orchestration module for clean server restarts and zero-corruption shutdowns:
+
+| Function | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| `gracefulRestart(client, serverId, options)` | `client: PteroClient, serverId?: string, options?: Object` | `Promise<{ success, shutdownDurationMs, bootDurationMs, totalDurationMs }>` | Safely shuts down server via console `stop`, polls until offline, and reboots. |
+
+---
+
+### 5. Library Reference: `ConfigEditor` (`scripts/lib/config-editor.js`)
 
 Safe configuration modifier preserving indentation, comments, and structure:
 

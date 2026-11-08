@@ -37,6 +37,38 @@ export const ISSUE_SIGNATURES = [
     remediation: 'Increase server memory allocation in panel, or reduce simulation-distance and configure entity limits in paper-world-defaults.yml.'
   },
   {
+    type: 'HIKARICP_STARVATION',
+    severity: 'CRITICAL',
+    name: 'HikariCP Pool Starvation / Database Timeout',
+    pattern: /(?:HikariPool-[\w\-]+ - Connection is not available, request timed out after \d+ms|java\.sql\.SQLTransientConnectionException: HikariPool)/i,
+    description: 'Database connection pool exhausted. Active connections are deadlocked or queries are taking too long to return to the pool.',
+    remediation: 'Inspect slow queries in database, check MySQL max_connections limit, or increase maximumPoolSize and connectionTimeout in plugin configuration.'
+  },
+  {
+    type: 'SQLITE_LOCK',
+    severity: 'CRITICAL',
+    name: 'SQLite Database Busy / Locked',
+    pattern: /(?:\[SQLITE_BUSY\]\s*The database file is locked|org\.sqlite\.SQLiteException:\s*\[SQLITE_BUSY\])/i,
+    description: 'Multiple concurrent threads attempted to write to an SQLite database file without Write-Ahead Logging (WAL) enabled.',
+    remediation: 'Ensure plugin is configured with journal_mode=WAL or migrate high-traffic plugin data to MySQL/MariaDB.'
+  },
+  {
+    type: 'NETTY_BUFFER_LEAK',
+    severity: 'FATAL',
+    name: 'Netty Direct Memory Buffer Leak',
+    pattern: /(?:io\.netty\.util\.internal\.OutOfDirectMemoryError|LEAK:\s*ByteBuf\.release\(\)\s*was not called)/i,
+    description: 'Netty direct memory leak detected. Packet handler or packet injection plugin failed to release ByteBuf buffers.',
+    remediation: 'Update packet-level plugins (e.g., ProtocolLib, PacketEvents, ViaVersion) to their latest builds.'
+  },
+  {
+    type: 'CORRUPTED_CHUNK',
+    severity: 'CRITICAL',
+    name: 'Corrupted World Chunk / RegionFile',
+    pattern: /(?:RegionFile .* is corrupted|Chunk file at .* is corrupted|Wrong location in world!|Corrupt chunk detected)/i,
+    description: 'World chunk region file header is corrupted, usually due to an abrupt server kill (SIGKILL) or sudden disk unmount.',
+    remediation: 'Restore corrupted region file from world backup, or run MCA Selector / Region-Fixer to prune damaged chunk headers.'
+  },
+  {
     type: 'WATCHDOG_FREEZE',
     severity: 'CRITICAL',
     name: 'Watchdog Freeze (Server Hang)',
@@ -95,6 +127,24 @@ export function parseLogLines(rawLogs, options = {}) {
   }
 
   return result.slice(-maxLines);
+}
+
+/**
+ * Extract thread metadata and execution context from log line.
+ */
+export function extractThreadContext(line) {
+  if (!line) return { thread: 'Unknown', isMainThread: false, level: 'INFO' };
+  const match = line.match(/\[([^/\]]+)\/([A-Z]+)\]/);
+  if (match) {
+    const thread = match[1].trim();
+    const isMainThread = /Server thread/i.test(thread);
+    return {
+      thread,
+      isMainThread,
+      level: match[2],
+    };
+  }
+  return { thread: 'Unknown', isMainThread: false, level: 'INFO' };
 }
 
 /**

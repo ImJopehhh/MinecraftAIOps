@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { detectIssues, parseLogLines } from '../scripts/lib/diagnostics.js';
+import { detectIssues, parseLogLines, extractThreadContext } from '../scripts/lib/diagnostics.js';
 
 test('diagnostics: detects PORT_BIND_ERROR', () => {
   const sampleLog = `
@@ -41,6 +41,43 @@ test('diagnostics: detects OUT_OF_MEMORY', () => {
   const issues = detectIssues(sampleLog);
   assert.equal(issues.length, 1);
   assert.equal(issues[0].type, 'OUT_OF_MEMORY');
+});
+
+test('diagnostics: detects HIKARICP_STARVATION', () => {
+  const sampleLog = `
+[Server thread/ERROR]: [MappleAuth] HikariPool-1 - Connection is not available, request timed out after 30000ms.
+`;
+  const issues = detectIssues(sampleLog);
+  assert.equal(issues.length, 1);
+  assert.equal(issues[0].type, 'HIKARICP_STARVATION');
+  assert.equal(issues[0].severity, 'CRITICAL');
+});
+
+test('diagnostics: detects SQLITE_LOCK', () => {
+  const sampleLog = `
+[Async Chat Thread - #2/WARN]: org.sqlite.SQLiteException: [SQLITE_BUSY] The database file is locked (database is locked)
+`;
+  const issues = detectIssues(sampleLog);
+  assert.equal(issues.length, 1);
+  assert.equal(issues[0].type, 'SQLITE_LOCK');
+});
+
+test('diagnostics: detects NETTY_BUFFER_LEAK', () => {
+  const sampleLog = `
+[Netty Epoll Server IO #1/ERROR]: io.netty.util.internal.OutOfDirectMemoryError: failed to allocate 16777216 byte(s) of direct memory
+`;
+  const issues = detectIssues(sampleLog);
+  assert.equal(issues.length, 1);
+  assert.equal(issues[0].type, 'NETTY_BUFFER_LEAK');
+});
+
+test('diagnostics: detects CORRUPTED_CHUNK', () => {
+  const sampleLog = `
+[Server thread/ERROR]: Chunk file at [-12, 45] is corrupted, cannot load chunk header
+`;
+  const issues = detectIssues(sampleLog);
+  assert.equal(issues.length, 1);
+  assert.equal(issues[0].type, 'CORRUPTED_CHUNK');
 });
 
 test('diagnostics: detects WATCHDOG_FREEZE', () => {
@@ -88,3 +125,14 @@ test('diagnostics: parseLogLines filters errors correctly', () => {
   assert.equal(warnsAndErrors.length, 2);
 });
 
+test('diagnostics: extractThreadContext parses thread and severity', () => {
+  const mainLine = '[21:00:00] [Server thread/INFO]: Done (2.5s)!';
+  const mainCtx = extractThreadContext(mainLine);
+  assert.equal(mainCtx.thread, 'Server thread');
+  assert.equal(mainCtx.isMainThread, true);
+
+  const asyncLine = '[21:00:05] [Async Chat Thread - #1/WARN]: Auth check timeout';
+  const asyncCtx = extractThreadContext(asyncLine);
+  assert.equal(asyncCtx.thread, 'Async Chat Thread - #1');
+  assert.equal(asyncCtx.isMainThread, false);
+});
