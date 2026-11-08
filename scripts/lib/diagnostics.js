@@ -45,6 +45,14 @@ export const ISSUE_SIGNATURES = [
     remediation: 'Inspect slow queries in database, check MySQL max_connections limit, or increase maximumPoolSize and connectionTimeout in plugin configuration.'
   },
   {
+    type: 'DATABASE_NETWORK_TIMEOUT',
+    severity: 'FATAL',
+    name: 'Database Network / Docker Isolation Timeout',
+    pattern: /(?:Communications link failure|java\.net\.SocketTimeoutException:\s*connect timed out|The last packet successfully received from the server was \d+ milliseconds ago|Host '.*' is not allowed to connect to this MySQL server)/i,
+    description: 'Database connection failed across network boundary. Pterodactyl container cannot route traffic to MySQL/MariaDB server.',
+    remediation: '1) If MySQL runs on the host machine, do not use localhost/127.0.0.1 (Docker container sees itself as localhost); use the Docker bridge gateway (e.g. 172.18.0.1) or public IP. 2) If remote, whitelist the Wings node public IP in MySQL bind-address and firewall (port 3306). 3) Ensure MySQL user grants allow connections from the remote IP.'
+  },
+  {
     type: 'SQLITE_LOCK',
     severity: 'CRITICAL',
     name: 'SQLite Database Busy / Locked',

@@ -6,6 +6,12 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import dns from 'node:dns';
+
+// Force IPv4-first DNS resolution globally to bypass hanging IPv6/AAAA routes on VPS & Wings daemon
+if (dns && typeof dns.setDefaultResultOrder === 'function') {
+  dns.setDefaultResultOrder('ipv4first');
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

@@ -53,6 +53,18 @@ test('diagnostics: detects HIKARICP_STARVATION', () => {
   assert.equal(issues[0].severity, 'CRITICAL');
 });
 
+test('diagnostics: detects DATABASE_NETWORK_TIMEOUT', () => {
+  const sampleLog = `
+[Server thread/ERROR]: [MappleSchool] Communications link failure
+The last packet successfully received from the server was 12 milliseconds ago.
+java.net.SocketTimeoutException: connect timed out
+`;
+  const issues = detectIssues(sampleLog);
+  assert.equal(issues.length, 1);
+  assert.equal(issues[0].type, 'DATABASE_NETWORK_TIMEOUT');
+  assert.equal(issues[0].severity, 'FATAL');
+});
+
 test('diagnostics: detects SQLITE_LOCK', () => {
   const sampleLog = `
 [Async Chat Thread - #2/WARN]: org.sqlite.SQLiteException: [SQLITE_BUSY] The database file is locked (database is locked)

@@ -43,11 +43,11 @@ Inspect server files to identify the running platform:
   - **NEVER** modify ports or IP bindings without verifying proxy routing in `velocity.toml`.
   - Ensure modern forwarding secrets match between proxy and backend.
 
-### C. Resource Boundaries
+### C. Resource Boundaries & Network Isolation
 Run `node scripts/ptero.js info` to map hard limits:
-- RAM ceiling (`limits.memory` in MB).
-- CPU core throttle (`limits.cpu` in %).
+- RAM ceiling (`limits.memory` in MB) and CPU throttle (`limits.cpu` in %).
 - Dedicated IP and open port allocations.
+- **Database Network Boundary Warning:** Pterodactyl servers run inside isolated Docker containers. If connecting to a database on the same host machine, `localhost` or `127.0.0.1` will fail because it resolves inside the container. Use the Docker bridge gateway (`172.18.0.1`) or the server's public IP. For remote databases, ensure the Wings node public IP is whitelisted on port 3306.
 
 ---
 
@@ -133,8 +133,12 @@ flowchart TD
 
 ## 5. Multi-Layer Verification SOP
 
-After applying any patch or configuration change, the AI **must verify** the outcome through 3 stages:
+After applying any patch or configuration change, the AI **must verify** the outcome through 4 stages:
 
+0. **Stage 0: Boot Milestone Confirmation (`Done (X.Xs)!`)**
+   Do not declare success simply because container state is `RUNNING`. Inspect `logs/latest.log` to confirm PaperMC output:
+   `[Server thread/INFO]: Done (X.XXs)! For help, type "help"`
+   Only after this milestone is reached are plugin handlers, listeners, and worlds fully loaded.
 1. **Stage 1: Passive Log Tail**
    ```bash
    node scripts/ptero.js logs --filter=error --lines=50

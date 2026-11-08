@@ -70,6 +70,7 @@ Log analysis and pattern matching module for Minecraft server failures:
 - **`MISSING_DEPENDENCY` (CRITICAL):** `UnknownDependencyException` / `CannotLoadException` (required plugin missing).
 - **`OUT_OF_MEMORY` (FATAL):** `OutOfMemoryError: Java heap space` or `GC overhead limit exceeded`.
 - **`HIKARICP_STARVATION` (CRITICAL):** HikariCP database pool exhausted / query timeout (`Connection is not available`).
+- **`DATABASE_NETWORK_TIMEOUT` (FATAL):** Database network failure / Docker isolation (`Communications link failure` or `SocketTimeoutException`).
 - **`SQLITE_LOCK` (CRITICAL):** SQLite database busy or locked (`[SQLITE_BUSY]` concurrent write race condition).
 - **`NETTY_BUFFER_LEAK` (FATAL):** Netty direct memory leak (`OutOfDirectMemoryError`).
 - **`CORRUPTED_CHUNK` (CRITICAL):** Damaged chunk or region file headers (`RegionFile corrupted`).
